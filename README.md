@@ -12,6 +12,6 @@ Fishes can swim back and forth between clients. New fishes can be spawned by cli
 When a fish hits the border of the client it is in, a hand off request is sent to the corresponding neighbor.
 Since the system implements the token ring technology, the fish is only handed off to the client's neighbor 
 if the client is currently holding the token. <br><br>
-The broker uses a thread pool of constant size provided by the Java Executor Framework for processing requests.<br><br>
+The broker uses a thread pool of constant size provided by the Java Executor Framework for the processing of incoming messages.<br><br>
 The system implements the Chandy-Lamport algorithm, a snapshot algorithmn used for recording a consistent 
 global state of an asynchronous system.
