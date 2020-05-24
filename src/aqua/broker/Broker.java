@@ -41,11 +41,21 @@ public class Broker {
     }
 
     public Endpoint getEndpoint() {
+
         return endpoint;
     }
 
     public ClientCollection<InetSocketAddress> getAvailableClients() {
+
         return availableClients;
+    }
+
+    public static void main(String[] args) {
+
+        Broker broker = new Broker();
+
+        broker.broker();
+
     }
 
     public void broker() {
@@ -53,14 +63,12 @@ public class Broker {
         // using the executor framework to manage a thread pool of fixed size
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
-        Thread terminateServerThread = new Thread(() -> {
+        executorService.execute(() -> {
 
             JOptionPane.showMessageDialog(null, "Press OK button to terminate server.");
             setStopRequested(true);
 
         });
-
-        terminateServerThread.start();
 
         while (!stopRequested) {
 
@@ -72,7 +80,6 @@ public class Broker {
         executorService.shutdown();
 
     }
-
 
     private class BrokerTask implements Runnable {
 
@@ -146,6 +153,7 @@ public class Broker {
 
         /**
          * Hands off the fish referenced in the message to the correct neighbor depending on the swim direction of the fish.
+         *
          * @param message the message sent by a client; contains the address of the sender and the fish which will be handed off.
          */
         public synchronized void handoffFish(Message message) {
@@ -169,14 +177,6 @@ public class Broker {
             endpoint.send(handoffTarget, payload);
             lock.writeLock().unlock();
         }
-
-    }
-
-    public static void main(String[] args) {
-
-        Broker broker = new Broker();
-
-        broker.broker();
 
     }
 

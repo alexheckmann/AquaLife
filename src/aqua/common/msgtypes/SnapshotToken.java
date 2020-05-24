@@ -1,23 +1,42 @@
 package aqua.common.msgtypes;
 
-import aqua.client.SnapshotMode;
-
 import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public class SnapshotToken implements Serializable {
 
-    private int fishSum;
+    private String initiatorId;
+    private int value;
 
-    public SnapshotToken(){
-        fishSum = 0;
+    public SnapshotToken(String initiatorId, int value) {
+
+        this.initiatorId = initiatorId;
+        this.value = value;
+
     }
 
-    public int getFishSum() {
-        return fishSum;
+    public String getInitiatorId() {
+
+        return initiatorId;
+
     }
 
-    public void setFishSum(int fishSum) {
-        this.fishSum = fishSum;
+    public void setInitiatorId(String initiatorId) {
+
+        this.initiatorId = initiatorId;
+
     }
+
+    public int getValue() {
+
+        return value;
+
+    }
+
+    public void setValue(int value) {
+
+        this.value = value;
+
+    }
+
 }
