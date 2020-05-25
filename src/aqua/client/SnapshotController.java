@@ -6,17 +6,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class SnapshotController implements ActionListener {
 
     private final Component parent;
     private final TankModel tankModel;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final TankView tankView;
+    private final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
 
-    public SnapshotController(Component component, TankModel tankModel) {
+    public SnapshotController(Component component, TankModel tankModel, TankView tankView) {
 
         parent = component;
         this.tankModel = tankModel;
+        this.tankView = tankView;
     }
 
 
@@ -30,6 +33,22 @@ public class SnapshotController implements ActionListener {
 
         JOptionPane.showMessageDialog(parent, "Initiate a global snapshot");
         tankModel.initiateSnapshot();
+        singleThreadExecutor.execute(() -> {
+
+            // todo wait condition
+            while (tankModel.getGlobalState() != 0) {
+
+                try {
+                    TimeUnit.MILLISECONDS.sleep(10);
+                } catch (InterruptedException consumed) {
+
+                    // allow thread to terminate
+
+                }
+            }
+
+            tankView.showGlobalState();
+        });
 
     }
 

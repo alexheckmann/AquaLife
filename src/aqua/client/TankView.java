@@ -34,6 +34,7 @@ public class TankView extends JPanel implements Observer {
                 tankModel.newFish(e.getX(), e.getY());
             }
         });
+
     }
 
     private void drawBorders(Graphics2D g2d) {
@@ -62,13 +63,18 @@ public class TankView extends JPanel implements Observer {
         if (!tankModel.hasToken()) {
             drawBorders((Graphics2D) g);
         }
-        JOptionPane.showMessageDialog(null, tankModel.getGlobalState());
+
     }
 
     @Override
     public void update(Observable o, Object arg) {
 
         SwingUtilities.invokeLater(repaintRunnable);
+    }
+
+    public void showGlobalState() {
+
+        JOptionPane.showMessageDialog(this, tankModel.getGlobalState());
     }
 
 }

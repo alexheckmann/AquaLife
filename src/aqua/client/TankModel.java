@@ -186,6 +186,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 
                 try {
 
+                    // todo replace latch mechanism with empty while loop
                     boolean localSnapshotDone = latch.await(500, TimeUnit.MILLISECONDS);
 
                     if (localSnapshotDone) {
@@ -317,6 +318,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
             forwarder.sendSnapshotMarker(leftNeighbor);
             forwarder.sendSnapshotMarker(rightNeighbor);
 
+            // todo replace latch mechanism with empty while loop
             boolean localSnapshotDone = latch.await(500, TimeUnit.MILLISECONDS);
 
             if (localSnapshotDone) {
