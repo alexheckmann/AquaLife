@@ -15,3 +15,12 @@ if the client is currently holding the token. <br><br>
 The broker uses a thread pool of constant size provided by the Java Executor Framework for the processing of incoming messages. There two ways to shut down the server, either by setting a boolean flag that work is done or by using the poison pill pattern (<i><strong>Poisoner.java</strong></i>), instantly shutting down the server.<br><br>
 The system implements the Chandy-Lamport algorithm, a snapshot algorithmn used for recording a consistent 
 global state of an asynchronous system.
+
+<h1>Getting started</h1>
+To run this application you need to
+<ol>
+<li>verify that you have at least Java 11 installed</li>
+<li>add <i><strong>messaging.jar</strong></i> (located in the <i>lib</i> directory) to your library path</li>
+<li>run <i><strong>Broker.java</strong></i> before starting any instance of <i><strong>Aqualife.java</strong></i></li>
+<li>run at least one instance of <i><strong>Aqualife.java</strong></i>, but multiple clients are supported</li>
+</ol>
