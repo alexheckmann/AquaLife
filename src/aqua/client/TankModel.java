@@ -2,11 +2,15 @@ package aqua.client;
 
 import aqua.common.Direction;
 import aqua.common.FishModel;
+import aqua.common.msgtypes.SnapshotMarker;
 import aqua.common.msgtypes.SnapshotToken;
 
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class TankModel extends Observable implements Iterable<FishModel> {
 
@@ -17,7 +21,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     protected volatile boolean token;
     private static final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     protected volatile int fishCounter = 0;
-    private RecordingMode recordingMode;
+    public boolean waitingForIdle = true;
     private volatile int localState = 0;
     protected final Timer timer;
     protected final Set<FishModel> fishies;
@@ -26,14 +30,15 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     public static final int HEIGHT = 350;
     protected static final int MAX_FISHIES = 5;
     private int globalState = 0;
-    private CountDownLatch latch;
+    public boolean showDialog;
+    public boolean initiator;
+    protected RecordingMode recordingMode;
 
     public TankModel(ClientCommunicator.ClientForwarder forwarder) {
 
         fishies = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.forwarder = forwarder;
         timer = new Timer();
-        latch = new CountDownLatch(1);
         token = false;
         recordingMode = RecordingMode.IDLE;
     }
@@ -49,7 +54,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     synchronized void onRegistration(String id) {
 
         this.id = id;
-        newFish(WIDTH - FishModel.getXSize(), random.nextInt(HEIGHT - FishModel.getYSize()));
+        //newFish(WIDTH - FishModel.getXSize(), random.nextInt(HEIGHT - FishModel.getYSize()));
     }
 
     /**
@@ -125,88 +130,99 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     /**
      *
      */
-    synchronized void receiveSnapshotMarker(InetSocketAddress sender) {
+    synchronized void receiveSnapshotMarker(InetSocketAddress sender, SnapshotMarker snapshotMarker) {
 
         // if a snapshot hasn't been initiated yet
         if (recordingMode == RecordingMode.IDLE) {
 
             localState += fishies.size();
 
-            if (sender.equals(leftNeighbor)) {
-                recordingMode = RecordingMode.RIGHT;
+            if (!leftNeighbor.equals(rightNeighbor)) {
+
+                if (sender.equals(leftNeighbor)) {
+                    recordingMode = RecordingMode.RIGHT;
+                } else {
+                    recordingMode = RecordingMode.LEFT;
+                }
+
             } else {
-                recordingMode = RecordingMode.LEFT;
+                recordingMode = RecordingMode.BOTH;
             }
 
-            forwarder.sendSnapshotMarker(leftNeighbor);
-            forwarder.sendSnapshotMarker(rightNeighbor);
-
-        } else if (recordingMode == RecordingMode.BOTH) {
-
-            if (sender.equals(leftNeighbor)) {
-                recordingMode = RecordingMode.RIGHT;
+            if (leftNeighbor.equals(rightNeighbor)) {
+                forwarder.sendSnapshotMarker(leftNeighbor, snapshotMarker);
             } else {
-                recordingMode = RecordingMode.LEFT;
+                forwarder.sendSnapshotMarker(leftNeighbor, snapshotMarker);
+                forwarder.sendSnapshotMarker(rightNeighbor, snapshotMarker);
             }
-
         } else {
+            if (!leftNeighbor.equals(rightNeighbor)) {
 
-            // if one channel has already finished recording and
-            // the other channel recording gets a message by the corresponding neighbor
-            if (recordingMode == RecordingMode.LEFT && sender.equals(leftNeighbor) ||
-                    recordingMode == RecordingMode.RIGHT && sender.equals(rightNeighbor)) {
+                if (sender.equals(leftNeighbor)) {
 
+                    switch (recordingMode) {
+                        case BOTH:
+                            recordingMode = RecordingMode.RIGHT;
+                            break;
+                        case LEFT:
+                            recordingMode = RecordingMode.IDLE;
+                            break;
+                    }
+
+                } else {
+
+                    switch (recordingMode) {
+                        case BOTH:
+                            recordingMode = RecordingMode.LEFT;
+                            break;
+                        case RIGHT:
+                            recordingMode = RecordingMode.IDLE;
+                            break;
+                    }
+
+                }
+
+            } else {
                 recordingMode = RecordingMode.IDLE;
+            }
 
-                // decreases the count of the latch, releasing the thread waiting for the local snapshot to be done
-                latch.countDown();
-
+            if (initiator && recordingMode == RecordingMode.IDLE) {
+                forwarder.sendSnapshotToken(leftNeighbor, new SnapshotToken(this.id, localState));
             }
         }
 
     }
 
     /**
-     * Handles the token when received by the clientReciever. If the sender has the same ID as the client, the creation of
-     * the global snapshot is finished and gets saved. Otherwise, a new thread gets started,
-     * waiting for the local snapshot to be done using the {@code CountDownLatch} API. When the local snapshot is done,
-     * the {@code localState} gets added to the current value of the token and gets sent to the client's left neighbor.
+     * Handles the token when received by the clientReciever.
      *
      * @param snapshotToken the token gathering local snapshots from each client to create a global snapshot
      */
     synchronized void handleSnapshotToken(SnapshotToken snapshotToken) {
 
-        if (snapshotToken.getInitiatorId().equals(this.id)) {
+        waitingForIdle = true;
 
-            globalState = snapshotToken.getValue();
+        singleThreadExecutor.execute(() -> {
 
-        } else {
+            while (waitingForIdle) {
+                if (recordingMode == RecordingMode.IDLE) {
 
-            singleThreadExecutor.execute(() -> {
-
-                try {
-
-                    // todo replace latch mechanism with empty while loop
-                    boolean localSnapshotDone = latch.await(500, TimeUnit.MILLISECONDS);
-
-                    if (localSnapshotDone) {
-
-                        snapshotToken.setValue(snapshotToken.getValue() + localState);
-                        forwarder.sendSnapshotToken(leftNeighbor, snapshotToken);
-
-                    }
-
-                } catch (InterruptedException consumed) {
-
-                    // allow thread to terminate
-
-                } finally {
-
-                    resetCountDownLatch();
+                    snapshotToken.addValue(localState);
+                    forwarder.sendSnapshotToken(leftNeighbor, snapshotToken);
+                    waitingForIdle = false;
 
                 }
+            }
+        });
 
-            });
+        // todo
+        if (initiator) {
+            // todo remove, only for debugging
+            System.out.println(snapshotToken.getValue());
+            //todo
+            initiator = false;
+            showDialog = true;
+            globalState = snapshotToken.getValue();
         }
 
     }
@@ -259,6 +275,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 
                     }
 
+
                 } else {
 
                     fish.reverse();
@@ -267,8 +284,13 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 
             }
 
-            if (fish.disappears())
+            if (fish.disappears()) {
+                if (recordingMode != RecordingMode.IDLE) {
+                    localState--;
+                }
+
                 it.remove();
+            }
         }
 
     }
@@ -311,44 +333,15 @@ public class TankModel extends Observable implements Iterable<FishModel> {
      */
     public synchronized void initiateSnapshot() {
 
-        try {
-
-            localState += fishies.size();
+        if (recordingMode == RecordingMode.IDLE) {
+            localState = fishies.size();
             recordingMode = RecordingMode.BOTH;
-            forwarder.sendSnapshotMarker(leftNeighbor);
-            forwarder.sendSnapshotMarker(rightNeighbor);
-
-            // todo replace latch mechanism with empty while loop
-            boolean localSnapshotDone = latch.await(500, TimeUnit.MILLISECONDS);
-
-            if (localSnapshotDone) {
-
-                forwarder.sendSnapshotToken(leftNeighbor, new SnapshotToken(id, localState));
-
-            }
-
-        } catch (InterruptedException consumed) {
-
-            // allow method to terminate
-
-        } finally {
-
-            resetCountDownLatch();
-
+            // todo
+            initiator = true;
+            forwarder.sendSnapshotMarker(leftNeighbor, new SnapshotMarker(this.id));
+            forwarder.sendSnapshotMarker(rightNeighbor, new SnapshotMarker(this.id));
         }
 
-    }
-
-    /**
-     * Creates a new CountDownLatch as they may not be reused after the count is zero
-     */
-    private void resetCountDownLatch() {
-
-        if (latch.getCount() == 0) {
-
-            latch = new CountDownLatch(1);
-
-        }
     }
 
 }

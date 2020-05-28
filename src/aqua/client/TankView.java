@@ -48,6 +48,15 @@ public class TankView extends JPanel implements Observer {
 
         Graphics2D g2d = (Graphics2D) g;
 
+        if (!tankModel.hasToken()) {
+            drawBorders((Graphics2D) g);
+        }
+
+        if (tankModel.showDialog) {
+            tankModel.showDialog = false;
+            JOptionPane.showMessageDialog(this, tankModel.getGlobalState());
+        }
+
         for (FishModel fishModel : tankModel) {
             g2d.drawImage(fishView.getImage(fishModel), fishModel.getX(), fishModel.getY(), null);
             g2d.drawString(fishModel.getId(), fishModel.getX(), fishModel.getY());
@@ -60,9 +69,7 @@ public class TankView extends JPanel implements Observer {
 
         super.paintComponent(g);
         doDrawing(g);
-        if (!tankModel.hasToken()) {
-            drawBorders((Graphics2D) g);
-        }
+
 
     }
 
@@ -72,9 +79,6 @@ public class TankView extends JPanel implements Observer {
         SwingUtilities.invokeLater(repaintRunnable);
     }
 
-    public void showGlobalState() {
 
-        JOptionPane.showMessageDialog(this, tankModel.getGlobalState());
-    }
 
 }

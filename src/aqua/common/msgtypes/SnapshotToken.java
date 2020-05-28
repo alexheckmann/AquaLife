@@ -33,9 +33,9 @@ public class SnapshotToken implements Serializable {
 
     }
 
-    public void setValue(int value) {
+    public void addValue(int value) {
 
-        this.value = value;
+        this.value += value;
 
     }
 

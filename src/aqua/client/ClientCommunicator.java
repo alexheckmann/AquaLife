@@ -58,9 +58,9 @@ public class ClientCommunicator {
             endpoint.send(target, new Token());
         }
 
-        public void sendSnapshotMarker(InetSocketAddress target) {
+        public void sendSnapshotMarker(InetSocketAddress target, SnapshotMarker snapshotMarker) {
 
-            endpoint.send(target, new SnapshotMarker());
+            endpoint.send(target, snapshotMarker);
         }
 
         public void sendSnapshotToken(InetSocketAddress address, SnapshotToken snapshotToken) {
@@ -95,7 +95,7 @@ public class ClientCommunicator {
                 } else if (payload instanceof Token) {
                     tankModel.receiveToken();
                 } else if (payload instanceof SnapshotMarker) {
-                    tankModel.receiveSnapshotMarker(message.getSender());
+                    tankModel.receiveSnapshotMarker(message.getSender(), (SnapshotMarker) payload);
                 } else if (payload instanceof SnapshotToken) {
                     tankModel.handleSnapshotToken((SnapshotToken) payload);
                 }

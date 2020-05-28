@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class SnapshotController implements ActionListener {
 
@@ -33,23 +32,6 @@ public class SnapshotController implements ActionListener {
 
         JOptionPane.showMessageDialog(parent, "Initiate a global snapshot");
         tankModel.initiateSnapshot();
-        singleThreadExecutor.execute(() -> {
-
-            // todo wait condition
-            while (tankModel.getGlobalState() != 0) {
-
-                try {
-                    TimeUnit.MILLISECONDS.sleep(10);
-                } catch (InterruptedException consumed) {
-
-                    // allow thread to terminate
-
-                }
-            }
-
-            tankView.showGlobalState();
-        });
-
     }
 
 }

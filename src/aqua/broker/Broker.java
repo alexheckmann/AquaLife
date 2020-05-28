@@ -8,7 +8,6 @@ import aqua.common.msgtypes.*;
 import messaging.Endpoint;
 import messaging.Message;
 
-import javax.swing.*;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -33,10 +32,12 @@ public class Broker {
     }
 
     public boolean isStopRequested() {
+
         return stopRequested;
     }
 
     public void setStopRequested(boolean stopRequested) {
+
         this.stopRequested = stopRequested;
     }
 
@@ -63,12 +64,16 @@ public class Broker {
         // using the executor framework to manage a thread pool of fixed size
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
+        /*
+
         executorService.execute(() -> {
 
             JOptionPane.showMessageDialog(null, "Press OK button to terminate server.");
             setStopRequested(true);
 
         });
+
+        */
 
         while (!stopRequested) {
 
@@ -86,6 +91,7 @@ public class Broker {
         private final Message message;
 
         private BrokerTask(Message incomingMessage) {
+
             message = incomingMessage;
         }
 
