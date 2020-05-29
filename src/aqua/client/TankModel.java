@@ -215,14 +215,12 @@ public class TankModel extends Observable implements Iterable<FishModel> {
             }
         });
 
-        // todo
         if (initiator) {
-            // todo remove, only for debugging
-            System.out.println(snapshotToken.getValue());
-            //todo
+
             initiator = false;
             showDialog = true;
             globalState = snapshotToken.getValue();
+
         }
 
     }
@@ -337,7 +335,6 @@ public class TankModel extends Observable implements Iterable<FishModel> {
         if (recordingMode == RecordingMode.IDLE) {
             localState = fishies.size();
             recordingMode = RecordingMode.BOTH;
-            // todo
             initiator = true;
             forwarder.sendSnapshotMarker(leftNeighbor, new SnapshotMarker(this.id));
             forwarder.sendSnapshotMarker(rightNeighbor, new SnapshotMarker(this.id));
