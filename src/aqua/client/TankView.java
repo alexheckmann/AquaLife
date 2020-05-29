@@ -70,7 +70,6 @@ public class TankView extends JPanel implements Observer {
         super.paintComponent(g);
         doDrawing(g);
 
-
     }
 
     @Override

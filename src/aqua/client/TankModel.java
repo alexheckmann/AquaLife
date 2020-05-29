@@ -263,6 +263,10 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 
                 if (hasToken()) {
 
+                    if (recordingMode != RecordingMode.IDLE) {
+                        localState--;
+                    }
+
                     Direction direction = fish.getDirection();
 
                     if (direction == Direction.LEFT) {
@@ -285,9 +289,6 @@ public class TankModel extends Observable implements Iterable<FishModel> {
             }
 
             if (fish.disappears()) {
-                if (recordingMode != RecordingMode.IDLE) {
-                    localState--;
-                }
 
                 it.remove();
             }
