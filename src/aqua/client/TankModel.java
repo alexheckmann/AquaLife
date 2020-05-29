@@ -324,6 +324,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
      */
     public synchronized void finish() {
 
+        singleThreadExecutor.shutdown();
         forwarder.deregister(id);
     }
 
