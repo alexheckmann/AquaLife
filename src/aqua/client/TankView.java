@@ -52,8 +52,8 @@ public class TankView extends JPanel implements Observer {
             drawBorders((Graphics2D) g);
         }
 
-        if (tankModel.showDialog) {
-            tankModel.showDialog = false;
+        if (tankModel.isShowDialog()) {
+            tankModel.setShowDialog(false);
             JOptionPane.showMessageDialog(this, tankModel.getGlobalState());
         }
 
@@ -77,7 +77,6 @@ public class TankView extends JPanel implements Observer {
 
         SwingUtilities.invokeLater(repaintRunnable);
     }
-
 
 
 }

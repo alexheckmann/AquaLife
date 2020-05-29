@@ -17,20 +17,20 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     protected volatile String id;
     protected volatile boolean token;
     protected volatile int fishCounter = 0;
-    private static final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-    private volatile int localState = 0;
-    public volatile boolean waitingForIdle;
-    protected final Timer timer;
-    protected final Set<FishModel> fishies;
-    protected final ClientCommunicator.ClientForwarder forwarder;
     public static final int WIDTH = 600;
     public static final int HEIGHT = 350;
     protected static final int MAX_FISHIES = 5;
-    private volatile int globalState = 0;
-    public boolean showDialog;
+    protected final Timer timer;
+    protected final Set<FishModel> fishies;
+    protected final ClientCommunicator.ClientForwarder forwarder;
+    private final ConcurrentMap<String, Reference> fishReferences;
+    public volatile boolean waitingForIdle;
     public boolean initiator;
     protected RecordingMode recordingMode;
-    private ConcurrentMap<String, Reference> fishReferences;
+    private volatile int localState = 0;
+    private volatile int globalState = 0;
+    private boolean showDialog;
+    private static final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
 
     public TankModel(ClientCommunicator.ClientForwarder forwarder) {
 
@@ -240,6 +240,16 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     public boolean hasToken() {
 
         return token;
+    }
+
+    public boolean isShowDialog() {
+
+        return showDialog;
+    }
+
+    public void setShowDialog(boolean showDialog) {
+
+        this.showDialog = showDialog;
     }
 
     public String getId() {
