@@ -43,21 +43,34 @@ public class ClientCollection<E> {
 	}
 
 	public int indexOf(E client) {
+
 		for (int i = 0; i < clients.size(); i++)
 			if (clients.get(i).client.equals(client))
 				return i;
 		return -1;
 	}
 
+	/**
+	 * @param index index
+	 * @return the object at the specified position
+	 */
 	public E getClient(int index) {
+
 		return clients.get(index).client;
 	}
 
+	public E getClient(String id) {
+
+		return clients.get(clients.indexOf(id)).client;
+	}
+
 	public int size() {
+
 		return clients.size();
 	}
 
 	public E getLeftNeighborOf(int index) {
+
 		return index == 0 ? clients.get(clients.size() - 1).client : clients.get(index - 1).client;
 	}
 
