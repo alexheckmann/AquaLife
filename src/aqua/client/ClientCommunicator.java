@@ -68,6 +68,11 @@ public class ClientCommunicator {
             endpoint.send(address, snapshotToken);
         }
 
+        public void sendLocationRequest(InetSocketAddress address, String fishId) {
+
+            endpoint.send(address, new LocationRequest(fishId));
+        }
+
     }
 
     public class ClientReceiver extends Thread {
@@ -98,6 +103,8 @@ public class ClientCommunicator {
                     tankModel.receiveSnapshotMarker(message.getSender(), (SnapshotMarker) payload);
                 } else if (payload instanceof SnapshotToken) {
                     tankModel.handleSnapshotToken((SnapshotToken) payload);
+                } else if (payload instanceof LocationRequest) {
+                    tankModel.receiveLocationRequest(((LocationRequest) payload).getFish());
                 }
             }
             System.out.println("Receiver stopped.");

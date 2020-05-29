@@ -7,10 +7,7 @@ import aqua.common.msgtypes.SnapshotToken;
 
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class TankModel extends Observable implements Iterable<FishModel> {
 
@@ -33,10 +30,12 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     public boolean showDialog;
     public boolean initiator;
     protected RecordingMode recordingMode;
+    private ConcurrentMap<String, Reference> fishReferences;
 
     public TankModel(ClientCommunicator.ClientForwarder forwarder) {
 
         fishies = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        fishReferences = new ConcurrentHashMap<>();
         this.forwarder = forwarder;
         timer = new Timer();
         token = false;
@@ -69,10 +68,11 @@ public class TankModel extends Observable implements Iterable<FishModel> {
             x = Math.min(x, WIDTH - FishModel.getXSize() - 1);
             y = Math.min(y, HEIGHT - FishModel.getYSize());
 
-            FishModel fish = new FishModel("fish" + (++fishCounter) + "@" + getId(), x, y,
-                    random.nextBoolean() ? Direction.LEFT : Direction.RIGHT);
+            String fishId = "fish" + (++fishCounter) + "@" + getId();
+            FishModel fish = new FishModel(fishId, x, y, random.nextBoolean() ? Direction.LEFT : Direction.RIGHT);
 
             fishies.add(fish);
+            fishReferences.put(fishId, Reference.HERE);
         }
     }
 
@@ -84,11 +84,15 @@ public class TankModel extends Observable implements Iterable<FishModel> {
                 localState++;
             }
 
+            fishReferences.replace(fish.getId(), Reference.LEFT, Reference.HERE);
+
         } else {
 
             if (recordingMode == RecordingMode.BOTH || recordingMode == RecordingMode.LEFT) {
                 localState++;
             }
+
+            fishReferences.replace(fish.getId(), Reference.HERE, Reference.RIGHT);
 
         }
 
@@ -225,6 +229,14 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 
     }
 
+    /**
+     * @param fishId the fish contained in a {@code LocationRequest}
+     */
+    public void receiveLocationRequest(String fishId) {
+
+        locateFishGlobally(fishId);
+    }
+
     public boolean hasToken() {
 
         return token;
@@ -270,11 +282,12 @@ public class TankModel extends Observable implements Iterable<FishModel> {
                     if (direction == Direction.LEFT) {
 
                         forwarder.handOff(fish, leftNeighbor);
+                        fishReferences.replace(fish.getId(), Reference.HERE, Reference.LEFT);
 
                     } else if (direction == Direction.RIGHT) {
 
                         forwarder.handOff(fish, rightNeighbor);
-
+                        fishReferences.replace(fish.getId(), Reference.HERE, Reference.RIGHT);
                     }
 
 
@@ -341,6 +354,42 @@ public class TankModel extends Observable implements Iterable<FishModel> {
             forwarder.sendSnapshotMarker(rightNeighbor, new SnapshotMarker(this.id));
         }
 
+    }
+
+
+    synchronized void locateFishGlobally(String fishId) {
+
+        if (!locateFishLocally(fishId)) {
+
+            forwarder.sendLocationRequest(leftNeighbor, fishId);
+            forwarder.sendLocationRequest(rightNeighbor, fishId);
+        }
+    }
+
+    /**
+     * Internal method for locating a given fish inside the tank
+     *
+     * @param fishId ID of the fish to search for
+     * @return true if the current client contains the fish; false otherwise
+     */
+    private synchronized boolean locateFishLocally(String fishId) {
+
+        if (fishReferences.get(fishId) == Reference.HERE) {
+
+            Optional<FishModel> fishOptional = fishies.stream().filter(fishModel -> fishModel.getId().equals(fishId)).findFirst();
+            fishOptional.ifPresent(FishModel::toggle);
+
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private enum Reference {
+        HERE,
+        LEFT,
+        RIGHT
     }
 
 }
