@@ -1,6 +1,6 @@
 <h1>Distributed Systems</h1>
 
-This repository contains an example application of a distributed system based on a message-based client server architecture. <br>
+This repository contains an example application of a distributed system based on a message-based combination of peer-to-peer & client server architecture. <br>
 The clients (<i><strong>Aqualife.java</strong></i>) are logically
 structured as a ring and are communicating directly with their left and right neighbor; 
 the broker (<i><strong>Broker.java</strong></i>) acts as a server, providing registering clients 
