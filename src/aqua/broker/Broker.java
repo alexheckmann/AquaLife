@@ -51,19 +51,12 @@ public class Broker {
         return availableClients;
     }
 
-    public static void main(String[] args) {
-
-        Broker broker = new Broker();
-
-        broker.broker();
-
-    }
-
     public void broker() {
 
         // using the executor framework to manage a thread pool of fixed size
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
+        // commented out for convenience
         /*
 
         executorService.execute(() -> {
@@ -83,6 +76,14 @@ public class Broker {
         }
 
         executorService.shutdown();
+
+    }
+
+    public static void main(String[] args) {
+
+        Broker broker = new Broker();
+
+        broker.broker();
 
     }
 

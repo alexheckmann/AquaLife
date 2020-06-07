@@ -49,7 +49,7 @@ public class ClientCommunicator {
 
         // todo send fish directly to the neighbor
         public void handOff(FishModel fish, InetSocketAddress target) {
-            // todo old version
+
             endpoint.send(broker, new HandoffRequest(fish));
         }
 

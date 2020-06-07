@@ -9,7 +9,7 @@ import java.awt.event.MouseEvent;
 import java.util.Observable;
 import java.util.Observer;
 
-@SuppressWarnings("serial")
+@SuppressWarnings("deprecation")
 public class TankView extends JPanel implements Observer {
 
     private final TankModel tankModel;

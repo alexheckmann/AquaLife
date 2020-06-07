@@ -5,7 +5,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.*;
 
-@SuppressWarnings("serial")
+@SuppressWarnings("deprecation")
 public class AquaGui extends JFrame implements Runnable, Observer {
 
     private final List<JMenuItem> fishMenuItems = Collections

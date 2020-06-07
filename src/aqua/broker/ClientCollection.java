@@ -4,86 +4,97 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * This class is not thread-safe and hence must be used in a thread-safe way, e.g. thread confined or 
- * externally synchronized. 
+ * This class is not thread-safe and hence must be used in a thread-safe way, e.g. thread confined or
+ * externally synchronized.
  */
 
 public class ClientCollection<E> {
-	private class Client {
-		final String id;
-		final E client;
 
-		Client(String id, E client) {
-			this.id = id;
-			this.client = client;
-		}
-	}
+    private final List<Client> clients;
 
-	private final List<Client> clients;
+    public ClientCollection() {
 
-	public ClientCollection() {
-		clients = new ArrayList<Client>();
-	}
+        clients = new ArrayList<>();
+    }
 
-	public ClientCollection<E> add(String id, E client) {
-		clients.add(new Client(id, client));
-		return this;
-	}
+    public ClientCollection<E> add(String id, E client) {
 
-	public ClientCollection<E> remove(int index) {
-		clients.remove(index);
-		return this;
-	}
+        clients.add(new Client(id, client));
+        return this;
+    }
 
-	public int indexOf(String id) {
-		for (int i = 0; i < clients.size(); i++)
-			if (clients.get(i).id.equals(id))
-				return i;
-		return -1;
-	}
+    public ClientCollection<E> remove(int index) {
 
-	public int indexOf(E client) {
+        clients.remove(index);
+        return this;
+    }
 
-		for (int i = 0; i < clients.size(); i++)
-			if (clients.get(i).client.equals(client))
-				return i;
-		return -1;
-	}
+    public int indexOf(String id) {
 
-	/**
-	 * @param index index
-	 * @return the object at the specified position
-	 */
-	public E getClient(int index) {
+        for (int i = 0; i < clients.size(); i++)
+            if (clients.get(i).id.equals(id))
+                return i;
+        return -1;
+    }
 
-		return clients.get(index).client;
-	}
+    public int indexOf(E client) {
 
-	public E getClient(String id) {
+        for (int i = 0; i < clients.size(); i++)
+            if (clients.get(i).client.equals(client))
+                return i;
+        return -1;
+    }
 
-		return clients.get(clients.indexOf(id)).client;
-	}
+    /**
+     * @param index index
+     * @return the object at the specified position
+     */
+    public E getClient(int index) {
 
-	public int size() {
+        return clients.get(index).client;
+    }
 
-		return clients.size();
-	}
+    public E getClient(String id) {
 
-	public E getLeftNeighborOf(int index) {
+        return clients.get(clients.indexOf(id)).client;
+    }
 
-		return index == 0 ? clients.get(clients.size() - 1).client : clients.get(index - 1).client;
-	}
+    public int size() {
 
-	public E getLeftNeighborOf(E e) {
-		return getLeftNeighborOf(indexOf(e));
-	}
+        return clients.size();
+    }
 
-	public E getRightNeighborOf(int index) {
-		return index < clients.size() - 1 ? clients.get(index + 1).client : clients.get(0).client;
-	}
+    public E getLeftNeighborOf(int index) {
 
-	public E getRightNeighborOf(E e) {
-		return getRightNeighborOf(indexOf(e));
-	}
+        return index == 0 ? clients.get(clients.size() - 1).client : clients.get(index - 1).client;
+    }
+
+    public E getLeftNeighborOf(E e) {
+
+        return getLeftNeighborOf(indexOf(e));
+    }
+
+    public E getRightNeighborOf(int index) {
+
+        return index < clients.size() - 1 ? clients.get(index + 1).client : clients.get(0).client;
+    }
+
+    public E getRightNeighborOf(E e) {
+
+        return getRightNeighborOf(indexOf(e));
+    }
+
+    private class Client {
+
+        final String id;
+        final E client;
+
+        Client(String id, E client) {
+
+            this.id = id;
+            this.client = client;
+        }
+
+    }
 
 }
