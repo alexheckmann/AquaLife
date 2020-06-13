@@ -17,18 +17,15 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     private static final int MAX_FISHES = 5;
     private static final Random random = new Random();
     private static final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-
-    private InetSocketAddress leftNeighbor;
-    private InetSocketAddress rightNeighbor;
-
-    private volatile String id;
-    private volatile boolean token;
-    private volatile int fishCounter;
     private final Timer timer;
     private final Set<FishModel> fishes;
     private final ClientCommunicator.ClientForwarder forwarder;
     private final ConcurrentMap<String, Reference> fishReferences;
-
+    private InetSocketAddress leftNeighbor;
+    private InetSocketAddress rightNeighbor;
+    private volatile String id;
+    private volatile boolean token;
+    private volatile int fishCounter;
     private volatile boolean waitingForIdle;
     private boolean initiator;
     private RecordingMode recordingMode;
@@ -82,9 +79,17 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     /**
      * @param id the client's ID
      */
-    synchronized void onRegistration(String id) {
+    synchronized void onRegistration(String id, int leaseDue) {
 
         this.id = id;
+        timer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+
+                forwarder.register();
+            }
+        }, leaseDue);
         //newFish(WIDTH - FishModel.getXSize(), random.nextInt(HEIGHT - FishModel.getYSize()));
     }
 
@@ -150,6 +155,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
      */
     synchronized void receiveToken() {
 
+        final int TOKEN_DURATION = 2000;
         token = true;
         timer.schedule(new TimerTask() {
 
@@ -159,7 +165,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
                 token = false;
                 forwarder.sendToken(leftNeighbor);
             }
-        }, 2000);
+        }, TOKEN_DURATION);
 
     }
 

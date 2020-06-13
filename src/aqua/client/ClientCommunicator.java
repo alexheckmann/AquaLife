@@ -92,7 +92,7 @@ public class ClientCommunicator {
                 Serializable payload = message.getPayload();
 
                 if (payload instanceof RegisterResponse) {
-                    tankModel.onRegistration(((RegisterResponse) payload).getId());
+                    tankModel.onRegistration(((RegisterResponse) payload).getId(), ((RegisterResponse) payload).getLeaseDuration());
                 } else if (payload instanceof HandoffRequest) {
                     tankModel.receiveFish(((HandoffRequest) payload).getFish());
                 } else if (payload instanceof NeighborUpdate) {

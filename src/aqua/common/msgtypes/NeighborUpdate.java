@@ -10,15 +10,19 @@ public final class NeighborUpdate implements Serializable {
     private final InetSocketAddress rightAddress;
 
     public NeighborUpdate(InetSocketAddress leftAddress, InetSocketAddress rightAddress) {
+
         this.leftAddress = leftAddress;
         this.rightAddress = rightAddress;
     }
 
     public InetSocketAddress getLeftAddress() {
+
         return leftAddress;
     }
 
     public InetSocketAddress getRightAddress() {
+
         return rightAddress;
     }
+
 }

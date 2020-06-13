@@ -10,6 +10,9 @@ import messaging.Message;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
+import java.sql.Timestamp;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -17,17 +20,28 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Broker {
 
-    private volatile boolean stopRequested;
+    public static final int LEASE_DURATION = 2000;
+    private static final int THREAD_POOL_SIZE = (int) (Runtime.getRuntime().availableProcessors() / 0.5);
     private final Endpoint endpoint;
     private final ClientCollection<InetSocketAddress> availableClients;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final int THREAD_POOL_SIZE = (int) (Runtime.getRuntime().availableProcessors() / 0.5);
+    private final Timer timer;
+    private volatile boolean stopRequested;
 
     public Broker() {
 
         endpoint = new Endpoint(Properties.PORT);
         availableClients = new ClientCollection<>();
         stopRequested = false;
+        timer = new Timer();
+
+    }
+
+    public static void main(String[] args) {
+
+        Broker broker = new Broker();
+
+        broker.broker();
 
     }
 
@@ -70,20 +84,25 @@ public class Broker {
 
         while (!stopRequested) {
 
+            timer.schedule(new TimerTask() {
+
+
+                @Override
+                public void run() {
+
+                    synchronized (availableClients) {
+                        availableClients.checkLease();
+                    }
+                }
+
+            }, LEASE_DURATION);
             Message message = endpoint.blockingReceive();
             executorService.execute(new BrokerTask(message));
+
 
         }
 
         executorService.shutdown();
-
-    }
-
-    public static void main(String[] args) {
-
-        Broker broker = new Broker();
-
-        broker.broker();
 
     }
 
@@ -95,6 +114,7 @@ public class Broker {
 
             message = incomingMessage;
         }
+
 
         @Override
         public void run() {
@@ -124,28 +144,40 @@ public class Broker {
         public synchronized void register(Message message) {
 
             InetSocketAddress sender = message.getSender();
-            int tankCount = availableClients.size() + 1;
-            availableClients.add("tank" + tankCount, sender);
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+            if (!availableClients.contains(sender)) {
 
-            // give token to first client
-            if (availableClients.size() == 1) {
+                int tankCount = availableClients.size() + 1;
+                availableClients.add("tank" + tankCount, sender, timestamp);
 
-                endpoint.send(sender, new Token());
+                // give token to first client
+                if (availableClients.size() == 1) {
 
+                    endpoint.send(sender, new Token());
+
+                }
+
+                endpoint.send(sender, new RegisterResponse("tank" + tankCount, LEASE_DURATION));
+
+                InetSocketAddress leftNeighbor = availableClients.getLeftNeighborOf(sender);
+                InetSocketAddress rightNeighbor = availableClients.getRightNeighborOf(sender);
+
+                endpoint.send(sender, new NeighborUpdate(leftNeighbor, rightNeighbor));
+                endpoint.send(leftNeighbor, new NeighborUpdate(availableClients.getLeftNeighborOf(leftNeighbor), sender));
+                endpoint.send(rightNeighbor, new NeighborUpdate(sender, availableClients.getRightNeighborOf(rightNeighbor)));
+
+            } else {
+
+                availableClients.update(sender, timestamp);
             }
-
-            endpoint.send(sender, new RegisterResponse("tank" + tankCount));
-
-            InetSocketAddress leftNeighbor = availableClients.getLeftNeighborOf(sender);
-            InetSocketAddress rightNeighbor = availableClients.getRightNeighborOf(sender);
-
-            endpoint.send(sender, new NeighborUpdate(leftNeighbor, rightNeighbor));
-            endpoint.send(leftNeighbor, new NeighborUpdate(availableClients.getLeftNeighborOf(leftNeighbor), sender));
-            endpoint.send(rightNeighbor, new NeighborUpdate(sender, availableClients.getRightNeighborOf(rightNeighbor)));
-
-
         }
 
+        /**
+         * Deregisters the client sending the message and informs the left and right neighbor
+         * about the new topological structure.
+         *
+         * @param message
+         */
         public synchronized void deregister(Message message) {
 
             InetSocketAddress sender = message.getSender();
@@ -159,9 +191,11 @@ public class Broker {
         }
 
         /**
-         * Hands off the fish referenced in the message to the correct neighbor depending on the swim direction of the fish.
+         * Hands off the fish referenced in the message to the correct neighbor
+         * depending on the swim direction of the fish.
          *
-         * @param message the message sent by a client; contains the address of the sender and the fish which will be handed off.
+         * @param message the message sent by a client; contains the address
+         * of the sender and the fish which will be handed off.
          */
         public synchronized void handoffFish(Message message) {
 
