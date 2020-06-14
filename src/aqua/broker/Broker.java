@@ -37,14 +37,6 @@ public class Broker {
 
     }
 
-    public static void main(String[] args) {
-
-        Broker broker = new Broker();
-
-        broker.broker();
-
-    }
-
     public boolean isStopRequested() {
 
         return stopRequested;
@@ -103,6 +95,14 @@ public class Broker {
         }
 
         executorService.shutdown();
+
+    }
+
+    public static void main(String[] args) {
+
+        Broker broker = new Broker();
+
+        broker.broker();
 
     }
 
