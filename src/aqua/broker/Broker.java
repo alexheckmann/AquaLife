@@ -106,6 +106,11 @@ public class Broker {
 
     }
 
+    /**
+     * A helper class used by the executor framework. Whenever the broker receives a new message,
+     * a new {@code BrokerTask} gets passed to the executor service, enqueueing the task and eventually
+     * handling the message.
+     */
     private class BrokerTask implements Runnable {
 
         private final Message message;
@@ -115,7 +120,9 @@ public class Broker {
             message = incomingMessage;
         }
 
-
+        /**
+         * Identifies the type of the received message and handles it appropriately.
+         */
         @Override
         public void run() {
 
@@ -141,6 +148,16 @@ public class Broker {
 
         }
 
+        /**
+         * Handles the registration of the message's sender. The sender gets added to the list of available clients
+         * if he isn't registered yet, otherwise the lease gets renewed. In the case of a newly registered client, the
+         * client and its left and right neighbors get a {@code NeighborUpdate}
+         * with the corresponding {@code InetSocketAddress} of their new neighbors,
+         * also the client gets a {@code RegisterResponse} confirming the (soft-state)
+         * registration for a given period of time.
+         *
+         * @param message The message received by the broker
+         */
         public synchronized void register(Message message) {
 
             InetSocketAddress sender = message.getSender();
@@ -174,9 +191,9 @@ public class Broker {
 
         /**
          * Deregisters the client sending the message and informs the left and right neighbor
-         * about the new topological structure.
+         * their new neighbors by sending a {@code NeighborUpdate}.
          *
-         * @param message
+         * @param message The message received by the broker
          */
         public synchronized void deregister(Message message) {
 
