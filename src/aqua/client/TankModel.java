@@ -17,18 +17,15 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     private static final int MAX_FISHES = 5;
     private static final Random random = new Random();
     private static final ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-
-    private InetSocketAddress leftNeighbor;
-    private InetSocketAddress rightNeighbor;
-
-    private volatile String id;
-    private volatile boolean token;
-    private volatile int fishCounter;
     private final Timer timer;
     private final Set<FishModel> fishes;
     private final ClientCommunicator.ClientForwarder forwarder;
     private final ConcurrentMap<String, Reference> fishReferences;
-
+    private InetSocketAddress leftNeighbor;
+    private InetSocketAddress rightNeighbor;
+    private volatile String id;
+    private volatile boolean token;
+    private volatile int fishCounter;
     private volatile boolean waitingForIdle;
     private boolean initiator;
     private RecordingMode recordingMode;
@@ -80,12 +77,22 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     }
 
     /**
+     * Assigns the client's ID given by the server and schedules a task to renew the registration.
+     *
      * @param id the client's ID
      */
-    synchronized void onRegistration(String id) {
+    synchronized void onRegistration(String id, int leaseDue) {
 
         this.id = id;
-        //newFish(WIDTH - FishModel.getXSize(), random.nextInt(HEIGHT - FishModel.getYSize()));
+        timer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+
+                forwarder.register();
+            }
+        }, leaseDue);
+
     }
 
     /**
@@ -108,23 +115,33 @@ public class TankModel extends Observable implements Iterable<FishModel> {
         }
     }
 
+    /**
+     * Adds the given fish to the tank.
+     * During snapshots receipts get added to the local state.
+     *
+     * @param fish the fish to be added
+     */
     synchronized void receiveFish(FishModel fish) {
 
-        if (fish.getDirection() == Direction.LEFT) {
+        if (recordingMode != RecordingMode.IDLE) {
 
-            if (recordingMode == RecordingMode.BOTH || recordingMode == RecordingMode.RIGHT) {
-                localState++;
+            if (fish.getDirection() == Direction.LEFT) {
+
+                if (recordingMode == RecordingMode.BOTH || recordingMode == RecordingMode.RIGHT) {
+                    localState++;
+                }
+
+                fishReferences.replace(fish.getId(), Reference.LEFT, Reference.HERE);
+
+            } else {
+
+                if (recordingMode == RecordingMode.BOTH || recordingMode == RecordingMode.LEFT) {
+                    localState++;
+                }
+
+                fishReferences.replace(fish.getId(), Reference.HERE, Reference.RIGHT);
+
             }
-
-            fishReferences.replace(fish.getId(), Reference.LEFT, Reference.HERE);
-
-        } else {
-
-            if (recordingMode == RecordingMode.BOTH || recordingMode == RecordingMode.LEFT) {
-                localState++;
-            }
-
-            fishReferences.replace(fish.getId(), Reference.HERE, Reference.RIGHT);
 
         }
 
@@ -146,10 +163,12 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     }
 
     /**
-     *
+     * Activates the possibility of handing off fishes while the token is hold. After a given period of time,
+     * the token gets passed on to the left neighbor.
      */
     synchronized void receiveToken() {
 
+        final int TOKEN_DURATION = 2000;
         token = true;
         timer.schedule(new TimerTask() {
 
@@ -159,7 +178,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
                 token = false;
                 forwarder.sendToken(leftNeighbor);
             }
-        }, 2000);
+        }, TOKEN_DURATION);
 
     }
 
@@ -351,7 +370,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
     }
 
     /**
-     * Initiates a global snapshot of the system
+     * Initiates a global snapshot of the system.
      */
     public synchronized void initiateSnapshot() {
 
@@ -365,7 +384,12 @@ public class TankModel extends Observable implements Iterable<FishModel> {
 
     }
 
-
+    /**
+     * Tries to locate the given fish locally. If the fish isn't present, the left and right neighbors get informed
+     * via a {@code LocationRequest}, so they continue the search.
+     *
+     * @param fishId id of the sought-after fish
+     */
     synchronized void locateFishGlobally(String fishId) {
 
         if (!locateFishLocally(fishId)) {
@@ -395,6 +419,9 @@ public class TankModel extends Observable implements Iterable<FishModel> {
         return false;
     }
 
+    /**
+     * Helper enum containing all possibilities of recording modes during a snapshot.
+     */
     private enum RecordingMode {
         IDLE,
         LEFT,
@@ -402,6 +429,9 @@ public class TankModel extends Observable implements Iterable<FishModel> {
         BOTH
     }
 
+    /**
+     * Helper enum containing all possibilities of reference directions.
+     */
     private enum Reference {
         HERE,
         LEFT,
