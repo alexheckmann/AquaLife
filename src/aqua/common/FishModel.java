@@ -1,96 +1,113 @@
 package aqua.common;
 
+import aqua.client.TankModel;
+
 import java.io.Serializable;
 import java.util.Random;
 
-import aqua.client.TankModel;
-
 @SuppressWarnings("serial")
 public final class FishModel implements Serializable {
-	private final static int xSize = 100;
-	private final static int ySize = 50;
-	private final static Random rand = new Random();
 
-	private final String id;
-	private int x;
-	private int y;
-	private Direction direction;
+    private final static int xSize = 100;
+    private final static int ySize = 50;
+    private final static Random rand = new Random();
 
-	private boolean toggled;
+    private final String id;
+    private int x;
+    private int y;
+    private Direction direction;
 
-	public FishModel(String id, int x, int y, Direction direction) {
-		this.id = id;
-		this.x = x;
-		this.y = y;
-		this.direction = direction;
-	}
+    private boolean toggled;
 
-	public String getId() {
-		return id;
-	}
+    public FishModel(String id, int x, int y, Direction direction) {
 
-	public String getTankId() {
-		return id.substring(id.indexOf("@") + 1);
-	}
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+    }
 
-	public int getX() {
-		return x;
-	}
+    public static int getXSize() {
 
-	public int getY() {
-		return y;
-	}
+        return xSize;
+    }
 
-	public Direction getDirection() {
-		return direction;
-	}
+    public static int getYSize() {
 
-	public void reverse() {
-		direction = direction.reverse();
-	}
+        return ySize;
+    }
 
-	public static int getXSize() {
-		return xSize;
-	}
+    public String getId() {
 
-	public static int getYSize() {
-		return ySize;
-	}
+        return id;
+    }
 
-	public void toggle() {
-		toggled = !toggled;
-	}
+    public String getTankId() {
 
-	public boolean isToggled() {
-		return toggled;
-	}
+        return id.substring(id.indexOf("@") + 1);
+    }
 
-	public boolean hitsEdge() {
-		return (direction == Direction.LEFT && x == 0)
-				|| (direction == Direction.RIGHT && x == TankModel.WIDTH - xSize);
-	}
+    public int getX() {
 
-	public boolean disappears() {
-		return (direction == Direction.LEFT && x == -xSize)
-				|| (direction == Direction.RIGHT && x == TankModel.WIDTH);
-	}
+        return x;
+    }
 
-	public void update() {
-		x += direction.getVector();
+    public int getY() {
 
-		double discreteSin = Math.round(Math.sin(x / 30.0));
-		discreteSin = rand.nextInt(10) < 8 ? 0 : discreteSin;
-		y += discreteSin;
-		y = y < 0 ? 0 : Math.min(y, TankModel.HEIGHT - FishModel.getYSize());
-	}
+        return y;
+    }
 
-	public void setToStart() {
-		x = direction == Direction.LEFT ? TankModel.WIDTH : -xSize;
-	}
+    public Direction getDirection() {
 
-	public boolean isDeparting() {
-		return (direction == Direction.LEFT && x < 0)
-				|| (direction == Direction.RIGHT && x > TankModel.WIDTH - xSize);
-	}
+        return direction;
+    }
+
+    public void reverse() {
+
+        direction = direction.reverse();
+    }
+
+    public void toggle() {
+
+        toggled = !toggled;
+    }
+
+    public boolean isToggled() {
+
+        return toggled;
+    }
+
+    public boolean hitsEdge() {
+
+        return (direction == Direction.LEFT && x == 0)
+                || (direction == Direction.RIGHT && x == TankModel.WIDTH - xSize);
+    }
+
+    public boolean disappears() {
+
+        return (direction == Direction.LEFT && x == -xSize)
+                || (direction == Direction.RIGHT && x == TankModel.WIDTH);
+    }
+
+    public void update() {
+
+        x += direction.getVector();
+
+        double discreteSin = Math.round(Math.sin(x / 30.0));
+        discreteSin = rand.nextInt(10) < 8 ? 0 : discreteSin;
+        y += discreteSin;
+        y = y < 0 ? 0 : Math.min(y, TankModel.HEIGHT - FishModel.getYSize());
+    }
+
+    public void setToStart() {
+
+        x = direction == Direction.LEFT ? TankModel.WIDTH : -xSize;
+    }
+
+    public boolean isDeparting() {
+
+        return (direction == Direction.LEFT && x < 0)
+                || (direction == Direction.RIGHT && x > TankModel.WIDTH - xSize);
+    }
 
 }

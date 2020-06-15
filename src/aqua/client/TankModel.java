@@ -436,6 +436,7 @@ public class TankModel extends Observable implements Iterable<FishModel> {
         HERE,
         LEFT,
         RIGHT
+
     }
 
 

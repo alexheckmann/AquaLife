@@ -4,14 +4,24 @@ import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public final class RegisterResponse implements Serializable {
-	private final String id;
 
-	public RegisterResponse(String id) {
-		this.id = id;
-	}
+    private final String id;
+    private final int leaseDuration;
 
-	public String getId() {
-		return id;
-	}
+    public RegisterResponse(String id, int leaseDuration) {
+
+        this.id = id;
+        this.leaseDuration = leaseDuration;
+    }
+
+    public String getId() {
+
+        return id;
+    }
+
+    public int getLeaseDuration() {
+
+        return leaseDuration;
+    }
 
 }
