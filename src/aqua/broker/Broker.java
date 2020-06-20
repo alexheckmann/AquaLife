@@ -20,21 +20,35 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Broker {
 
+    private static Broker instance;
     public static final int LEASE_DURATION = 2000;
     private static final int THREAD_POOL_SIZE = (int) (Runtime.getRuntime().availableProcessors() / 0.5);
     private final Endpoint endpoint;
     private final ClientCollection<InetSocketAddress> availableClients;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReadWriteLock lock;
     private final Timer timer;
     private volatile boolean stopRequested;
 
-    public Broker() {
+    private Broker() {
 
         endpoint = new Endpoint(Properties.PORT);
         availableClients = new ClientCollection<>();
         stopRequested = false;
+        lock = new ReentrantReadWriteLock();
         timer = new Timer();
 
+    }
+
+    /**
+     * @return the singleton instance of the Broker class
+     */
+    public static Broker getInstance() {
+
+        if (instance == null) {
+            instance = new Broker();
+        }
+
+        return instance;
     }
 
     public boolean isStopRequested() {
@@ -100,7 +114,7 @@ public class Broker {
 
     public static void main(String[] args) {
 
-        Broker broker = new Broker();
+        Broker broker = getInstance();
 
         broker.broker();
 
