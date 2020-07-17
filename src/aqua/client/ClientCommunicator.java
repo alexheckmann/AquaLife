@@ -3,7 +3,7 @@ package aqua.client;
 import aqua.common.FishModel;
 import aqua.common.Properties;
 import aqua.common.msgtypes.*;
-import messaging.Endpoint;
+import aqua.common.security.SecureEndpoint;
 import messaging.Message;
 
 import java.io.Serializable;
@@ -11,11 +11,11 @@ import java.net.InetSocketAddress;
 
 public class ClientCommunicator {
 
-    private final Endpoint endpoint;
+    private final SecureEndpoint endpoint;
 
     public ClientCommunicator() {
 
-        endpoint = new Endpoint();
+        endpoint = new SecureEndpoint();
     }
 
     public ClientForwarder newClientForwarder() {

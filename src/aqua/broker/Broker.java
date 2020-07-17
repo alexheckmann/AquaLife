@@ -5,6 +5,7 @@ import aqua.common.Direction;
 import aqua.common.FishModel;
 import aqua.common.Properties;
 import aqua.common.msgtypes.*;
+import aqua.common.security.SecureEndpoint;
 import messaging.Endpoint;
 import messaging.Message;
 
@@ -23,7 +24,7 @@ public class Broker {
     private static Broker instance;
     public static final int LEASE_DURATION = 2000;
     private static final int THREAD_POOL_SIZE = (int) (Runtime.getRuntime().availableProcessors() / 0.5);
-    private final Endpoint endpoint;
+    private final SecureEndpoint endpoint;
     private final ClientCollection<InetSocketAddress> availableClients;
     private final ReadWriteLock lock;
     private final Timer timer;
@@ -31,7 +32,7 @@ public class Broker {
 
     private Broker() {
 
-        endpoint = new Endpoint(Properties.PORT);
+        endpoint = new SecureEndpoint(Properties.PORT);
         availableClients = new ClientCollection<>();
         stopRequested = false;
         lock = new ReentrantReadWriteLock();
